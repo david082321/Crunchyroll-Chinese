@@ -2,5 +2,45 @@
 	{
 		"pattern": "Sophia Reeler, a timid noble, .* Sophia learns the hard way that gorilla strength isn’t so simple.",
 		"replacement": "膽小怕事的邊境伯爵千金蘇菲亞·里拉，被選上「猩猩的加護」——一種號稱史上最強的戰鬥系加護。她原本夢想的平靜學生生活因而破碎，因為王立騎士團看中了她無與倫比的力量，而將她招募入團。在同時要兼顧學業、騎士團的任務，以及駕馭自身那股壓倒性力量的過程中，蘇菲亞辛苦地體會到，猩猩的力量並非想像中那般單純。"
+	},
+	{
+		"pattern": "Five centuries ago, Demon .* his for the taking!",
+		"replacement": "這裡是統合曆2099年──新宿市。在被滅亡的500年後，傳說中的魔王「貝爾托爾」再次降臨於發展達到極致的未來都市。巨大都市國家的輝煌繁榮……以及其背後所隱藏的慘烈「黑暗」，藉由「他」的降臨一一揭開。為了統治新世界，魔王將在未來縱橫馳騁！"
+	},
+	{
+		"pattern": "This young girl hates all those goodie-two-shoes heroines .* she ever wants to become the world’s greatest villainess.",
+		"replacement": "最討厭「好孩子」故事設定的主角，卻意外的轉生到自己最喜歡的女性向戀愛遊戲當中，並且成為遊戲裡反派千金。既然已經如願以償地轉生到此處，她索性從小就立下志向，一定要成為能夠名留青史、世界上最出色的壞女人。"
+	},
+	{
+		"pattern": "When his father remarries, Yuta Asamura .* Is it admiration, familial love, or something more?",
+		"replacement": "高中生淺村悠太，由於父親再婚，和學年第一美少女綾瀨沙季成為同住一個屋簷下的兄妹。都見過雙親感情破裂的兩人對男女關係慎重看待，約好要保持適度的距離，既不接近也不對立。沙季渴望親情而一直獨自努力，因此不懂得如何依賴別人，悠太也不曉得該如何以哥哥的身分與她相處。某些地方十分相似的兩人，逐漸感受到與對方共同生活有多麼愜意……。這是一個可能會發展成戀愛的故事。原本素昧平生的男女，一點一點地接近、彼此關係漸漸改變的 ── 戀愛生活。"
+	},
+	{
+		"pattern": "Author Hotaru Yuyami .* moments with his new capricious companion.",
+		"replacement": "繪本作家．夕闇螢因為愛犬．花子過世而難過得把自己封閉起來，但是某一天，當他眺望庭院裡的粉紅色蘑菇時，蘑菇居然從土裡冒出來，變成了一隻狗！「菇狗」的出現雖然很莫名其妙，卻讓阿螢慢慢走出悲傷，重新振作起來，而阿螢的責編．駒子，還有忠實書迷兼蘑菇研究所員．矢良的幫助，更讓阿螢開始與外面的世界有了更多接觸。"
+	},
+	{
+		"pattern": "Ron Kamonohashi .* solving their first mystery!",
+		"replacement": "過去，偵探培訓學校BULE，曾有一位號稱無論什麼謎題都解得開的天才，本人也宣告希望終生將稀有的天賦奉獻給偵探業的男人「鴨乃橋論」。但是，他作為偵探卻有個致命的缺陷：破案率100％，犯人逮捕率卻是0％！？有苦難言的偵探鴨乃橋論將與單純呆傻的搜查一課刑警一色都都丸聯手，華麗地解開所有的謎題。"
+	},
+	{
+		"pattern": "Reach the top, .* and Bam, the boy who needed nothing but her",
+		"replacement": "一位叫做第二十五夜的男孩，生命中有大半的時間都被困在那又廣大又神秘的塔底下，唯一陪伴在他身邊的只有他的朋友——蕾哈爾。然而有一天蕾哈爾卻為了追逐繁星而踏入神之塔，追隨著她的腳步，夜打了塔的大門，試著面對每一樓層的挑戰，揭開塔的秘密，展開一場屬於他的冒險"
+	},
+	{
+		"pattern": "Jill breaks out .* This is her last chance to get it right!",
+		"replacement": "有「軍神令孃」之稱的伯爵千金吉兒，在戰場上的戰功卓著，仍抵不過未婚夫王太子的背叛，她遭到王太子的拘捕並宣佈死刑，儘管嘗試逃脫，卻依舊被女神之槍貫穿了胸膛。魂歸冥府之際，她發覺自己死後重生回到10歲，身處在被迫與王太子訂婚的那場晚宴裡，為了避免跟前世一樣重蹈覆轍，倉促之下選擇了跟身後的帝國皇帝求婚。此舉雖擺脫了王太子咄咄逼人的糾纏，但接替而來的是，她跟帝國皇帝之間前途未卜的命運。"
+	},
+	{
+		"pattern": "Nina never imagined she would be at the center of a royal .* Despite this uncertain fate, she finds joy in knowing someone finally needs her.",
+		"replacement": "在福爾托納王國的郭外生活的孤兒妮娜，擁有和辰星之神一般深藍色－琉璃色的眼睛。由於和死於意外事故的福爾托納王國公主阿麗莎擁有相同顏色的眼睛，妮娜被第二王子阿茲爾找到，並被要求成為公主的替代品。身為辰星巫女以及公主的替身，妮娜被賜予的使命是——在三個月後，作為假冒新娘，嫁給大國加爾加達的第一王子賽特。即使被命運玩弄，妮娜也為自己受人需要而感到欣喜。她直率的雙眼注視的究竟是什麼……為守護珍愛之人而下定決心之時，各自的命運都開始發生巨變！"
+	},
+	{
+		"pattern": "Rakuro Hizutome only cares about one thing: beating crappy .* to uncover its hidden secrets",
+		"replacement": "如果世界上的遊戲有100款神作，那麼也就有存在著1000款糞作。這是深愛糞作也為糞作所鍾愛的男人「陽務樂郎」，挑戰與糞作完全極端的神作「香格里拉·開拓異境」的故事。一位糞作獵手挑戰神作，最棒的「遊戲×奇幻」冒險譚，開幕！"
+	},
+	{
+		"pattern": "To escape his tiring job, weary Murata .* light up the ballpark and maybe even their hearts.",
+		"replacement": "身為上班族數年的村田，每天在公司裡被上司呵斥、被一堆文件包圍，活像走在成為社畜的不歸路上。對他來說唯一能暫時逃離現實的避風港，就是那熱鬧的球場。那天村田像往常般獨自前往球場看比賽，卻意外遭遇了剛上手的新人啤酒小姐 ── 辣妹瑠璃子。她倒出來的啤酒滿是泡沫，還大大咧咧地坐到他旁邊休息、毫不避諱地聊天……然而這位看似放蕩的女孩，其實內心極為純情、青澀！在這座球場上，不僅有球員和觀眾，還有播報小姐、警衛、啦啦隊、以及各式各樣的啤酒小姐……眾多角色齊聚一堂，共同創造出一幕幕充滿熱情、笑容與淚水的人情戲劇。獻給所有投身棒球世界、在球場上奮鬥著的人們 ── 這是一部充滿笑聲與感動的球場愛情喜劇！"
 	}
 ]
