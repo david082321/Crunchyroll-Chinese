@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Crunchyroll Up Next Interceptor with JSON Translation
-// @namespace    http://tampermonkey.net/
-// @version      1.6
-// @description  Intercepts Crunchyroll's XHR/Fetch JSON and translates values using dictionary from cloud with local caching.
-// @author       Your Name
+// @name         Crunchyroll 中文版
+// @namespace    Crunchyroll-Chinese
+// @version      1.7
+// @description  將 Crunchyroll 網站介面翻譯為繁體中文，提供更友好的使用體驗。
+// @author       david082321、GPT-4o
 // @match        https://www.crunchyroll.com/*
 // @grant        unsafeWindow
 // @grant        GM_log
@@ -17,11 +17,14 @@
     const CONFIG = {
         versionUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/version.json',
         exactDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/exact.json',
-        regexDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/regex.json'
+        regexDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/regex.json',
+        extraDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/extra.json'
     };
 
     let exactTranslationDict = {};
     let regexTranslationDict = [];
+    let extraExactDict = {};
+    let extraRegexDict = [];
 
     function loadJson(url) {
         return new Promise((resolve, reject) => {
@@ -53,7 +56,16 @@
             if (exactTranslationDict[obj]) {
                 return exactTranslationDict[obj];
             }
+            if (extraExactDict[obj]) {
+                return extraExactDict[obj];
+            }
             for (const { pattern, replacement } of regexTranslationDict) {
+                const regex = new RegExp(pattern, 'i');
+                if (regex.test(obj)) {
+                    return obj.replace(regex, replacement);
+                }
+            }
+            for (const { pattern, replacement } of extraRegexDict) {
                 const regex = new RegExp(pattern, 'i');
                 if (regex.test(obj)) {
                     return obj.replace(regex, replacement);
@@ -95,6 +107,24 @@
             } else {
                 const cached = localStorage.getItem('crunchyroll_translation_regex');
                 if (cached) regexTranslationDict = JSON.parse(cached);
+            }
+
+            if (remoteVersion.extra !== localVersion.extra) {
+                promises.push(
+                    loadJson(CONFIG.extraDictUrl).then(data => {
+                        extraExactDict = data.exact || {};
+                        extraRegexDict = data.regex || [];
+                        localStorage.setItem('crunchyroll_translation_extra', JSON.stringify(data));
+                        localVersion.extra = remoteVersion.extra;
+                    })
+                );
+            } else {
+                const cached = localStorage.getItem('crunchyroll_translation_extra');
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    extraExactDict = data.exact || {};
+                    extraRegexDict = data.regex || [];
+                }
             }
 
             return Promise.all(promises).then(() => {
