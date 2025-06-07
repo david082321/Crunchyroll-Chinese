@@ -52,15 +52,43 @@
 		"replacement": "被冒險者隊伍認為是無用廢物，僅收到一枚金幣作為遣散費就被逐出隊伍的青年治療師．傑諾斯。出身於貧民窟，憑藉自學的治癒魔法行醫的傑諾斯並未持有治癒師執照。無處可去的傑諾斯遇上命懸一線的精靈少女莉莉… 以在貧民窟外圍開業的治療院為舞台，無照天才治療師的無自覺最強奇幻劇開始了…。"
 	},
 	{
-		"pattern": "Tokyo is burning, and citizens are mysteriously suffering from spontaneous human combustion all throughout the city! .* But his past and a burning secret behind the scenes could set everything ablaze.",
+		"pattern": "Tokyo is burning, and citizens are mysteriously suffering from spontaneous human combustion all throughout the city! .* But his past and a burning secret behind the scenes could set everything ablaze\\.",
 		"replacement": "故事描述，人會突然起火燃燒，變成火炎怪物「焰人」作亂，這是神秘的人體自燃現象。第八特殊消防隊的新隊員森羅日下部從小就很崇拜英雄，但由於母親從前在一次意外中身亡時，他卻露出了生硬的笑容，而被人稱為「惡魔」。之後，他還得到了「第三世代」控制火焰的能力。為了找出母親和弟弟身亡的真相，森羅加入了特殊消防隊，將會打倒「焰人」，追尋這個現象的謎團。"
 	},
 	{
-		"pattern": "Embark on a voyage of a lifetime with One Piece. The epic anime series created by renowned mangaka Eiichiro Oda .* 15 movies, with the latest, One Piece Film Red, being the highest-grossing film in the franchise. One Piece is produced by Toei Animation.",
+		"pattern": "Embark on a voyage of a lifetime with One Piece\\. The epic anime series created by renowned mangaka Eiichiro Oda .* 15 movies, with the latest, One Piece Film Red, being the highest-grossing film in the franchise\\. One Piece is produced by Toei Animation\\.",
 		"replacement": "展開一場終生難忘的冒險旅程，盡在《航海王》。這部由知名漫畫家尾田榮一郎創作的史詩級動畫系列風靡全球，25 年來跨越世代地感動無數粉絲。這場驚心動魄的海上冒險充滿了堅定的友情、為自由而戰的壯烈戰鬥，以及對夢想不懈的追求。跟隨蒙其．D．魯夫與他可愛又充滿魅力的夥伴們，一起在大海賊時代中尋找真正的力量與正義。\n\n蒙其．D．魯夫誓言成為「海賊王」，任何人和任何困難都無法阻止他的夢想。因誤食「惡魔果實」而擁有橡膠般延展能力的他，踏上尋找傳說寶藏「One Piece」的旅程。他將航向危機四伏的「偉大航道」，並一步步集結夥伴，組成草帽海賊團——用羈絆與信念緊緊連結在一起。這位船長永不下錨，直到他與夥伴們都實現夢想為止！\n\n《航海王》目前已有超過 1100 集動畫，最新進度來到〈蛋頭篇〉，草帽一行人終於登上蛋頭島，與備受期待的「貝加龐克博士」相會。Crunchyroll 提供所有日語原音字幕集數，並同步收錄超過千集的英文配音版本。此外，《航海王》還擁有 13 部特別篇與 15 部電影作品，最新作《航海王劇場版：紅髮歌姬》更創下系列最高票房紀錄。《航海王》由東映動畫製作。"
 	},
 	{
-		"pattern": "Fate Graphite was born into a world where magical skills shape your destiny. His skill is Gluttony, a seemingly .* feed his appetite. Will he learn to control this gruesome ability for the better?",
+		"pattern": "Fate Graphite was born into a world where magical skills shape your destiny .* Will he learn to control this gruesome ability for the better?",
 		"replacement": "擔任城門守衛的斐特，因為自己持有的技能「暴食」是個只會讓肚子變餓的沒用能力，被迫過著最低階的生活。不過在他偶然解決掉侵入城內的盜賊後，世界徹底改變。沒錯，斐特持有的技能「暴食」，其實隱藏著能奪取殺害對象的技能和能力值的驚人力量。就這樣，原本只能像隻螻蟻苟活下去的斐特，命運悄悄地，也迅速地開始轉動——。"
+	},
+	{
+		"pattern": "Meg Raspberry is just an apprentice witch celebrating her 17th birthday .* Join Meg on her travels as she collects the happy tears from everyone she meets to gain eternal life!",
+		"replacement": "「妳再過一年就要死了，因為詛咒。」在十七歲生日那天，見習魔女梅格從師父——永年魔女浮士德口中收到了殘酷的餘命宣告。解除詛咒的唯一方法，是收集一千滴人類的「喜悅之淚」，煉製成能延續生命的「生命種子」。為了活下去，原本封閉內心的梅格開始踏入人群，與形形色色的人相遇：歡笑、淚水、友情、愛情……每一滴眼淚都承載著珍貴的羈絆，每一次離別都讓她更靠近生命的答案。在這充滿相遇與告別的一年裡，梅格逐漸領悟魔女真正的使命，也發現師父隱藏在嚴厲背後的深意—— 「我還完全沒能向師父報恩呢，所以——」 這是一個明亮溫暖卻又帶著淡淡哀傷的故事，關於魔女師徒之間未盡的教導、來不及說出口的感謝，以及用眼淚澆灌出的成長奇蹟。"
+	},
+	{
+		"pattern": "",
+		"replacement": ""
+	},
+	{
+		"pattern": "",
+		"replacement": ""
+	},
+	{
+		"pattern": "",
+		"replacement": ""
+	},
+	{
+		"pattern": "",
+		"replacement": ""
+	},
+	{
+		"pattern": "",
+		"replacement": ""
+	},
+	{
+		"pattern": "",
+		"replacement": ""
 	}
 ]
