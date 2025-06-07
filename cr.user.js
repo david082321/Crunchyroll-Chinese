@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         Crunchyroll 中文版
 // @namespace    Crunchyroll-Chinese
-// @version      1.7
+// @version      1.8
 // @description  將 Crunchyroll 網站介面翻譯為繁體中文，提供更友好的使用體驗。
 // @author       david082321、GPT-4o
 // @match        https://www.crunchyroll.com/*
 // @grant        unsafeWindow
 // @grant        GM_log
 // @grant        GM_xmlhttpRequest
+// @grant        GM.getValue
+// @grant        GM.setValue
 // @run-at       document-start
 // ==/UserScript==
 
@@ -77,60 +79,58 @@
         }
     }
 
-    function updateTranslationDictionaries() {
-        return loadJson(CONFIG.versionUrl).then(remoteVersion => {
-            const localVersion = JSON.parse(localStorage.getItem('crunchyroll_translation_version') || '{}');
+    async function updateTranslationDictionaries() {
+        const remoteVersion = await loadJson(CONFIG.versionUrl);
+        const localVersion = JSON.parse(await GM.getValue('translation_version', '{}'));
 
-            const promises = [];
+        const promises = [];
 
-            if (remoteVersion.exact !== localVersion.exact) {
-                promises.push(
-                    loadJson(CONFIG.exactDictUrl).then(data => {
-                        exactTranslationDict = data;
-                        localStorage.setItem('crunchyroll_translation_exact', JSON.stringify(data));
-                        localVersion.exact = remoteVersion.exact;
-                    })
-                );
-            } else {
-                const cached = localStorage.getItem('crunchyroll_translation_exact');
-                if (cached) exactTranslationDict = JSON.parse(cached);
-            }
+        if (remoteVersion.exact !== localVersion.exact) {
+            promises.push(
+                loadJson(CONFIG.exactDictUrl).then(data => {
+                    exactTranslationDict = data;
+                    GM.setValue('translation_exact', JSON.stringify(data));
+                    localVersion.exact = remoteVersion.exact;
+                })
+            );
+        } else {
+            const cached = await GM.getValue('translation_exact');
+            if (cached) exactTranslationDict = JSON.parse(cached);
+        }
 
-            if (remoteVersion.regex !== localVersion.regex) {
-                promises.push(
-                    loadJson(CONFIG.regexDictUrl).then(data => {
-                        regexTranslationDict = data;
-                        localStorage.setItem('crunchyroll_translation_regex', JSON.stringify(data));
-                        localVersion.regex = remoteVersion.regex;
-                    })
-                );
-            } else {
-                const cached = localStorage.getItem('crunchyroll_translation_regex');
-                if (cached) regexTranslationDict = JSON.parse(cached);
-            }
+        if (remoteVersion.regex !== localVersion.regex) {
+            promises.push(
+                loadJson(CONFIG.regexDictUrl).then(data => {
+                    regexTranslationDict = data;
+                    GM.setValue('translation_regex', JSON.stringify(data));
+                    localVersion.regex = remoteVersion.regex;
+                })
+            );
+        } else {
+            const cached = await GM.getValue('translation_regex');
+            if (cached) regexTranslationDict = JSON.parse(cached);
+        }
 
-            if (remoteVersion.extra !== localVersion.extra) {
-                promises.push(
-                    loadJson(CONFIG.extraDictUrl).then(data => {
-                        extraExactDict = data.exact || {};
-                        extraRegexDict = data.regex || [];
-                        localStorage.setItem('crunchyroll_translation_extra', JSON.stringify(data));
-                        localVersion.extra = remoteVersion.extra;
-                    })
-                );
-            } else {
-                const cached = localStorage.getItem('crunchyroll_translation_extra');
-                if (cached) {
-                    const data = JSON.parse(cached);
+        if (remoteVersion.extra !== localVersion.extra) {
+            promises.push(
+                loadJson(CONFIG.extraDictUrl).then(data => {
                     extraExactDict = data.exact || {};
                     extraRegexDict = data.regex || [];
-                }
+                    GM.setValue('translation_extra', JSON.stringify(data));
+                    localVersion.extra = remoteVersion.extra;
+                })
+            );
+        } else {
+            const cached = await GM.getValue('translation_extra');
+            if (cached) {
+                const data = JSON.parse(cached);
+                extraExactDict = data.exact || {};
+                extraRegexDict = data.regex || [];
             }
+        }
 
-            return Promise.all(promises).then(() => {
-                localStorage.setItem('crunchyroll_translation_version', JSON.stringify(localVersion));
-            });
-        });
+        await Promise.all(promises);
+        await GM.setValue('translation_version', JSON.stringify(localVersion));
     }
 
     const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json)/;
