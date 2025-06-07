@@ -72,6 +72,10 @@
 		"replacement": "人類消失後，地球經歷了漫長歲月。在日本首都東京・銀座的一家飯店「銀河樓」中，接待機器人八千代與其他員工機器人們，至今仍默默守候，等待主人歸來，以及再次迎接人類客人的那一天。然而──在這百年間首位到訪的客人，竟是地球外的生命體。接連而至的他們，其目的究竟是投宿？侵略？亦或是另有圖謀？為了捍衛「銀河樓」的尊嚴，八千代與夥伴們的款待之道，現在正要開始。"
 	},
 	{
+		"pattern": "Welcome to Crunchyroll Presents: The Anime Effect.*The Anime Effect podcast is brought to you by Crunchyroll and Sony Music Entertainment.",
+		"replacement": "歡迎來到《Crunchyroll出品：動漫效應》節目，由主持人 Nicholas Friedman、LeAlec Murray 和 Leah President 帶你一探動畫如何在你的世界中現身。一起加入我們，掌握最新新聞、節目更新，以及你最愛的影集與流行文化的深入解析。現在就來看看動畫的影響力究竟有多強大。《動漫效應》節目由 Crunchyroll 與索尼音樂娛樂聯合製作。"
+	},
+	{
 		"pattern": "",
 		"replacement": ""
 	}
