@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Crunchyroll 中文版
+// @name         Crunchyroll 中文化
 // @namespace    Crunchyroll-Chinese
-// @version      1.8
+// @version      2.0
 // @description  將 Crunchyroll 網站介面翻譯為繁體中文，提供更友好的使用體驗。
 // @author       david082321、GPT-4o
 // @match        https://www.crunchyroll.com/*
@@ -79,13 +79,22 @@
         }
     }
 
-    async function updateTranslationDictionaries() {
-        const remoteVersion = await loadJson(CONFIG.versionUrl);
-        const localVersion = JSON.parse(await GM.getValue('translation_version', '{}'));
+    async function updateTranslationDictionaries(loadType) {
+        const translation_version = await GM.getValue('translation_version', '{}');
+        if (translation_version === "{}") loadType = "update";
+        // 1天更新一次
+        const lastUpdated = await GM.getValue('last_updated_time', 0);
+        const now = Date.now();
+        const waitTimes = 1 * 24 * 60 * 60 * 1000;
+        if (now - lastUpdated > waitTimes) {
+            loadType = "update";
+            await GM.setValue('last_updated_time', now);
+        }
 
-        const promises = [];
-
-        if (remoteVersion.exact !== localVersion.exact) {
+        if (loadType === "update") {
+            const localVersion = JSON.parse(translation_version);
+            const promises = [];
+            const remoteVersion = await loadJson(CONFIG.versionUrl);
             promises.push(
                 loadJson(CONFIG.exactDictUrl).then(data => {
                     exactTranslationDict = data;
@@ -93,12 +102,6 @@
                     localVersion.exact = remoteVersion.exact;
                 })
             );
-        } else {
-            const cached = await GM.getValue('translation_exact');
-            if (cached) exactTranslationDict = JSON.parse(cached);
-        }
-
-        if (remoteVersion.regex !== localVersion.regex) {
             promises.push(
                 loadJson(CONFIG.regexDictUrl).then(data => {
                     regexTranslationDict = data;
@@ -106,12 +109,6 @@
                     localVersion.regex = remoteVersion.regex;
                 })
             );
-        } else {
-            const cached = await GM.getValue('translation_regex');
-            if (cached) regexTranslationDict = JSON.parse(cached);
-        }
-
-        if (remoteVersion.extra !== localVersion.extra) {
             promises.push(
                 loadJson(CONFIG.extraDictUrl).then(data => {
                     extraExactDict = data.exact || {};
@@ -120,25 +117,69 @@
                     localVersion.extra = remoteVersion.extra;
                 })
             );
-        } else {
-            const cached = await GM.getValue('translation_extra');
-            if (cached) {
-                const data = JSON.parse(cached);
-                extraExactDict = data.exact || {};
-                extraRegexDict = data.regex || [];
-            }
+            await Promise.all(promises);
+            await GM.setValue('translation_version', JSON.stringify(localVersion));
         }
 
-        await Promise.all(promises);
-        await GM.setValue('translation_version', JSON.stringify(localVersion));
+        const cachedExact = await GM.getValue('translation_exact');
+        if (cachedExact) exactTranslationDict = JSON.parse(cachedExact);
+        const cachedRegex = await GM.getValue('translation_regex');
+        if (cachedRegex) regexTranslationDict = JSON.parse(cachedRegex);
+        const cachedExtra = await GM.getValue('translation_extra');
+        if (cachedExtra) {
+            const data = JSON.parse(cachedExtra);
+            extraExactDict = data.exact || {};
+            extraRegexDict = data.regex || [];
+        }
+    }
+
+    function waitForHeaderAndInsert() {
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(() => insertRefreshButton(), 2000);
+        } else {
+            document.addEventListener('DOMContentLoaded', waitForHeaderAndInsert);
+        }
+    }
+
+    function insertRefreshButton() {
+        // 找到 header 動作容器
+        const headerActions = document.querySelector('.header-actions');
+        if (!headerActions) return;
+
+        // 找到搜尋按鈕的容器
+        const searchButton = headerActions.querySelector('a[href="/search"]')?.parentElement;
+        if (!searchButton) return;
+
+        // 建立新的 div 作為刷新按鈕
+        const refreshButton = document.createElement('div');
+        refreshButton.className = 'nav-horizontal-layout__action-item--KZBne';
+        refreshButton.innerHTML = `
+            <div class="erc-header-tile state-icon-only" role="button" aria-label="重新整理翻譯" tabindex="0">
+            <div class="erc-header-svg">
+                <svg class="header-svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" role="img">
+                <path d="M12 4V1L8 5l4 4V6c3.3 0 6 2.7 6 6 0 1.2-.4 2.3-1 3.2l1.5 1.3C19.2 15.1 20 13.1 20 11c0-4.4-3.6-8-8-8zm-6.5.5C4.8 6.9 4 8.9 4 11c0 4.4 3.6 8 8 8v3l4-4-4-4v3c-3.3 0-6-2.7-6-6 0-1.2.4-2.3 1-3.2L5.5 7.5z"/>
+                </svg>
+            </div>
+            </div>
+        `;
+
+        refreshButton.addEventListener('click', async () => {
+            if (typeof updateTranslationDictionaries === 'function') {
+                await updateTranslationDictionaries("update");
+                alert('翻譯字典已重新整理');
+            }
+        });
+        // 插入在搜尋按鈕前
+        headerActions.insertBefore(refreshButton, searchButton);
     }
 
     const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json)/;
     const TARGET_METHOD = 'GET';
 
     GM_log('Crunchyroll Interceptor script loading...');
+    waitForHeaderAndInsert();
 
-    updateTranslationDictionaries().then(() => {
+    updateTranslationDictionaries("local").then(() => {
         GM_log('Dictionaries loaded and cached.');
 
         const originalXhrOpen = unsafeWindow.XMLHttpRequest.prototype.open;
