@@ -42,5 +42,25 @@
 	{
 		"pattern": "To escape his tiring job, weary Murata .* light up the ballpark and maybe even their hearts.",
 		"replacement": "身為上班族數年的村田，每天在公司裡被上司呵斥、被一堆文件包圍，活像走在成為社畜的不歸路上。對他來說唯一能暫時逃離現實的避風港，就是那熱鬧的球場。那天村田像往常般獨自前往球場看比賽，卻意外遭遇了剛上手的新人啤酒小姐 ── 辣妹瑠璃子。她倒出來的啤酒滿是泡沫，還大大咧咧地坐到他旁邊休息、毫不避諱地聊天……然而這位看似放蕩的女孩，其實內心極為純情、青澀！在這座球場上，不僅有球員和觀眾，還有播報小姐、警衛、啦啦隊、以及各式各樣的啤酒小姐……眾多角色齊聚一堂，共同創造出一幕幕充滿熱情、笑容與淚水的人情戲劇。獻給所有投身棒球世界、在球場上奮鬥著的人們 ── 這是一部充滿笑聲與感動的球場愛情喜劇！"
+	},
+	{
+		"pattern": "Kurt Rockhans is a kind-hearted .* Kurt has SSS-rank skills in anything other than fighting, as he sets off on a new journey.",
+		"replacement": "在英雄隊伍作為雜務人員工作的溫柔少年格爾特，某天因「沒用」突然被逐出隊伍，甚至被判斷戰鬥相關的各種適性都是最低等級。格爾特為了維持生計，開始幫忙各式各樣的工作，但想不到他在所到之處都展現了超乎人類的驚人才能！因為格爾特除了戰鬥以外的領域，其實都是適性最高的 SSS 級…！然而關鍵的本人對此毫無發覺，並誤認是「常見的事」。這無自覺的行動將會拯救人們、城鎮、甚至國家！？被英雄隊伍開除的少年踏上不知所措的旅途——而這便是那「常見的故事」。"
+	},
+	{
+		"pattern": "Banished as “useless,” Zenos, .* Can he buck the odds and heal a world that cast him aside?",
+		"replacement": "被冒險者隊伍認為是無用廢物，僅收到一枚金幣作為遣散費就被逐出隊伍的青年治療師．傑諾斯。出身於貧民窟，憑藉自學的治癒魔法行醫的傑諾斯並未持有治癒師執照。無處可去的傑諾斯遇上命懸一線的精靈少女莉莉… 以在貧民窟外圍開業的治療院為舞台，無照天才治療師的無自覺最強奇幻劇開始了…。"
+	},
+	{
+		"pattern": "Tokyo is burning, and citizens are mysteriously suffering from spontaneous human combustion all throughout the city! .* But his past and a burning secret behind the scenes could set everything ablaze.",
+		"replacement": "故事描述，人會突然起火燃燒，變成火炎怪物「焰人」作亂，這是神秘的人體自燃現象。第八特殊消防隊的新隊員森羅日下部從小就很崇拜英雄，但由於母親從前在一次意外中身亡時，他卻露出了生硬的笑容，而被人稱為「惡魔」。之後，他還得到了「第三世代」控制火焰的能力。為了找出母親和弟弟身亡的真相，森羅加入了特殊消防隊，將會打倒「焰人」，追尋這個現象的謎團。"
+	},
+	{
+		"pattern": "Embark on a voyage of a lifetime with One Piece. The epic anime series created by renowned mangaka Eiichiro Oda .* 15 movies, with the latest, One Piece Film Red, being the highest-grossing film in the franchise. One Piece is produced by Toei Animation.",
+		"replacement": "展開一場終生難忘的冒險旅程，盡在《航海王》。這部由知名漫畫家尾田榮一郎創作的史詩級動畫系列風靡全球，25 年來跨越世代地感動無數粉絲。這場驚心動魄的海上冒險充滿了堅定的友情、為自由而戰的壯烈戰鬥，以及對夢想不懈的追求。跟隨蒙其．D．魯夫與他可愛又充滿魅力的夥伴們，一起在大海賊時代中尋找真正的力量與正義。\n\n蒙其．D．魯夫誓言成為「海賊王」，任何人和任何困難都無法阻止他的夢想。因誤食「惡魔果實」而擁有橡膠般延展能力的他，踏上尋找傳說寶藏「One Piece」的旅程。他將航向危機四伏的「偉大航道」，並一步步集結夥伴，組成草帽海賊團——用羈絆與信念緊緊連結在一起。這位船長永不下錨，直到他與夥伴們都實現夢想為止！\n\n《航海王》目前已有超過 1100 集動畫，最新進度來到〈蛋頭篇〉，草帽一行人終於登上蛋頭島，與備受期待的「貝加龐克博士」相會。Crunchyroll 提供所有日語原音字幕集數，並同步收錄超過千集的英文配音版本。此外，《航海王》還擁有 13 部特別篇與 15 部電影作品，最新作《航海王劇場版：紅髮歌姬》更創下系列最高票房紀錄。《航海王》由東映動畫製作。"
+	},
+	{
+		"pattern": "Fate Graphite was born into a world where magical skills shape your destiny. His skill is Gluttony, a seemingly .* feed his appetite. Will he learn to control this gruesome ability for the better?",
+		"replacement": "擔任城門守衛的斐特，因為自己持有的技能「暴食」是個只會讓肚子變餓的沒用能力，被迫過著最低階的生活。不過在他偶然解決掉侵入城內的盜賊後，世界徹底改變。沒錯，斐特持有的技能「暴食」，其實隱藏著能奪取殺害對象的技能和能力值的驚人力量。就這樣，原本只能像隻螻蟻苟活下去的斐特，命運悄悄地，也迅速地開始轉動——。"
 	}
 ]
