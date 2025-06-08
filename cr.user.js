@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crunchyroll 中文化
 // @namespace    Crunchyroll-Chinese
-// @version      2.1
+// @version      2.2
 // @description  將 Crunchyroll 網站介面翻譯為繁體中文，提供更友好的使用體驗。
 // @author       david082321、GPT-4o
 // @match        https://www.crunchyroll.com/*
@@ -72,6 +72,9 @@
         } else if (typeof obj === "string") {
             // 判斷完整路徑是否在黑名單，若是跳過翻譯
             if (black_key_paths.includes(currentPath)) {
+                return obj;
+            }
+            if (/^rels\[\d+\]\.content\.title$/.test(currentPath)) {
                 return obj;
             }
 
@@ -194,7 +197,8 @@
         headerActions.insertBefore(refreshButton, searchButton);
     }
 
-    const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json)/;
+    // const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json)/;
+    const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json|index.*\.js)/;
     const TARGET_METHOD = 'GET';
 
     GM_log('Crunchyroll Interceptor script loading...');
@@ -220,19 +224,36 @@
                 xhr.addEventListener('readystatechange', function () {
                     if (xhr.readyState === 4 && xhr.status === 200) {
                         const contentType = xhr.getResponseHeader('Content-Type') || '';
-                        if (contentType.includes('application/json')) {
-                            try {
-                                const data = JSON.parse(xhr.responseText);
-                                const translatedData = translateJsonValues(data);
-                                const newText = JSON.stringify(translatedData);
+                        try {
+                            let responseText = xhr.responseText;
 
+                            let newText;
+
+                            if (contentType.includes('application/json')) {
+                                const data = JSON.parse(responseText);
+                                const translatedData = translateJsonValues(data);
+                                newText = JSON.stringify(translatedData);
+                                GM_log('[XHR Modified] Pure JSON translated.');
+                            } else {
+                                // 搜尋 JSON.parse 的內嵌字串
+                                const match = responseText.match(/JSON\.parse\(\s*'({\\".+?})'\s*\)/);
+                                if (match && match[1]) {
+                                    const rawJsonStr = match[1].replace(/\\"/g, '"');
+                                    const json = JSON.parse(rawJsonStr);
+                                    const translated = translateJsonValues(json);
+                                    const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
+                                    newText = responseText.replace(match[1], reStr);
+                                    GM_log('[XHR Modified] Embedded JSON.parse translated.');
+                                }
+                            }
+
+                            if (newText) {
                                 Object.defineProperty(xhr, 'responseText', { get: () => newText });
                                 Object.defineProperty(xhr, 'response', { get: () => newText });
-
-                                GM_log('[XHR Modified] JSON values translated.');
-                            } catch (e) {
-                                GM_log('XHR JSON parse error:', e);
                             }
+
+                        } catch (e) {
+                            GM_log('XHR parse error:', e);
                         }
                     }
                     if (originalOnReadyStateChange) originalOnReadyStateChange.apply(this, arguments);
@@ -250,24 +271,42 @@
                 GM_log(`[Fetch Intercepted] ${method} ${url}`);
                 return originalFetch.apply(this, arguments).then(response => {
                     const contentType = response.headers.get('Content-Type') || '';
-                    if (contentType.includes('application/json')) {
-                        return response.clone().json().then(data => {
-                            const translatedData = translateJsonValues(data);
-                            const modifiedBody = JSON.stringify(translatedData);
+                    return response.clone().text().then(text => {
+                        try {
+                            let newText;
 
-                            GM_log('[Fetch Modified] JSON values translated.');
-
-                            return new Response(modifiedBody, {
-                                status: response.status,
-                                statusText: response.statusText,
-                                headers: {
-                                    'Content-Type': 'application/json;charset=UTF-8',
-                                    'Content-Length': modifiedBody.length.toString()
+                            if (contentType.includes('application/json')) {
+                                const data = JSON.parse(text);
+                                const translated = translateJsonValues(data);
+                                newText = JSON.stringify(translated);
+                                GM_log('[Fetch Modified] Pure JSON translated.');
+                            } else {
+                                const match = text.match(/JSON\.parse\(\s*'({\\".+?})'\s*\)/);
+                                if (match && match[1]) {
+                                    const rawJsonStr = match[1].replace(/\\"/g, '"');
+                                    const json = JSON.parse(rawJsonStr);
+                                    const translated = translateJsonValues(json);
+                                    const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
+                                    newText = text.replace(match[1], reStr);
+                                    GM_log('[Fetch Modified] Embedded JSON.parse translated.');
                                 }
-                            });
-                        });
-                    }
-                    return response;
+                            }
+
+                            if (newText) {
+                                return new Response(newText, {
+                                    status: response.status,
+                                    statusText: response.statusText,
+                                    headers: {
+                                        'Content-Type': 'application/json;charset=UTF-8',
+                                        'Content-Length': newText.length.toString()
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            GM_log('Fetch parse error:', e);
+                        }
+                        return response;
+                    });
                 });
             }
 
