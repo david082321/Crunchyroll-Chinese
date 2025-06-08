@@ -190,7 +190,8 @@
         refreshButton.addEventListener('click', async () => {
             if (typeof updateTranslationDictionaries === 'function') {
                 await updateTranslationDictionaries("update");
-                alert('翻譯字典已重新整理');
+                const localVersion = JSON.parse(await GM.getValue('translation_version', '{}'));
+                alert(`翻譯字典已更新：${localVersion.exact} / ${localVersion.regex} / ${localVersion.extra}`);
             }
         });
         // 插入在搜尋按鈕前
