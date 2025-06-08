@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crunchyroll 中文化
 // @namespace    Crunchyroll-Chinese
-// @version      2.0
+// @version      2.1
 // @description  將 Crunchyroll 網站介面翻譯為繁體中文，提供更友好的使用體驗。
 // @author       david082321、GPT-4o
 // @match        https://www.crunchyroll.com/*
@@ -22,6 +22,10 @@
         regexDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/regex.json',
         extraDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/extra.json'
     };
+    const black_key_list = ["uuid", "_uid", "slug", "filename", "fieldtype", "article_type", "linktype", "source", "cached_url", "component", "category"];
+    const black_key_paths = [
+        "story.content.title"
+    ];
 
     let exactTranslationDict = {};
     let regexTranslationDict = [];
@@ -45,16 +49,33 @@
         });
     }
 
-    function translateJsonValues(obj) {
+    function translateJsonValues(obj, currentPath = "") {
         if (Array.isArray(obj)) {
-            return obj.map(item => translateJsonValues(item));
-        } else if (obj && typeof obj === 'object') {
+            return obj.map((item, index) =>
+            translateJsonValues(item, currentPath ? `${currentPath}[${index}]` : `[${index}]`)
+            );
+        } else if (obj && typeof obj === "object") {
             const translatedObj = {};
             for (const key in obj) {
-                translatedObj[key] = translateJsonValues(obj[key]);
+                const newPath = currentPath ? `${currentPath}.${key}` : key;
+
+                // 先判斷 key 是否在 key 名字黑名單
+                if (black_key_list.includes(key)) {
+                    // 不翻譯該 key 的值，直接帶過
+                    translatedObj[key] = obj[key];
+                    continue;
+                }
+
+                translatedObj[key] = translateJsonValues(obj[key], newPath);
             }
             return translatedObj;
-        } else if (typeof obj === 'string') {
+        } else if (typeof obj === "string") {
+            // 判斷完整路徑是否在黑名單，若是跳過翻譯
+            if (black_key_paths.includes(currentPath)) {
+                return obj;
+            }
+
+            // 以下是原本的翻譯邏輯
             if (exactTranslationDict[obj]) {
                 return exactTranslationDict[obj];
             }
@@ -62,13 +83,13 @@
                 return extraExactDict[obj];
             }
             for (const { pattern, replacement } of regexTranslationDict) {
-                const regex = new RegExp(pattern, 'i');
+                const regex = new RegExp(pattern, "i");
                 if (regex.test(obj)) {
                     return obj.replace(regex, replacement);
                 }
             }
             for (const { pattern, replacement } of extraRegexDict) {
-                const regex = new RegExp(pattern, 'i');
+                const regex = new RegExp(pattern, "i");
                 if (regex.test(obj)) {
                     return obj.replace(regex, replacement);
                 }
@@ -192,7 +213,7 @@
         };
 
         unsafeWindow.XMLHttpRequest.prototype.send = function (body) {
-            if (this._method === TARGET_METHOD && TARGET_URL_REGEX.test(this._url)) {
+            if (this._method === TARGET_METHOD && (TARGET_URL_REGEX.test(this._url) || this._url.includes('/v1/en-US/stories'))) {
                 const xhr = this;
                 const originalOnReadyStateChange = xhr.onreadystatechange;
 
