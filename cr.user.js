@@ -79,7 +79,7 @@
             }
 
             // ✅ 限定 langDict 對 audio/timed_text JSON 生效
-            if (/\/(audio_languages|timed_text)_languages\.json/.test(sourceUrl)) {
+            if (/\/(audio|timed_text)_languages\.json/.test(sourceUrl)) {
                 return langDict[obj] || obj;
             }
 
