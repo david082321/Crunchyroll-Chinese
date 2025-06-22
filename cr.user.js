@@ -20,17 +20,18 @@
         versionUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/version.json',
         exactDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/exact.json',
         regexDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/regex.json',
-        extraDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/extra.json'
+        extraDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/extra.json',
+        langDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/lang.json'
     };
+
     const black_key_list = ["uuid", "_uid", "slug", "filename", "fieldtype", "article_type", "linktype", "source", "cached_url", "component", "category"];
-    const black_key_paths = [
-        "story.content.title"
-    ];
+    const black_key_paths = ["story.content.title"];
 
     let exactTranslationDict = {};
     let regexTranslationDict = [];
     let extraExactDict = {};
     let extraRegexDict = [];
+    let langDict = {};
 
     function loadJson(url) {
         return new Promise((resolve, reject) => {
@@ -49,10 +50,10 @@
         });
     }
 
-    function translateJsonValues(obj, currentPath = "") {
+    function translateJsonValues(obj, currentPath = "", sourceUrl = "") {
         if (Array.isArray(obj)) {
             return obj.map((item, index) =>
-            translateJsonValues(item, currentPath ? `${currentPath}[${index}]` : `[${index}]`)
+                translateJsonValues(item, currentPath ? `${currentPath}[${index}]` : `[${index}]`, sourceUrl)
             );
         } else if (obj && typeof obj === "object") {
             const translatedObj = {};
@@ -65,8 +66,7 @@
                     translatedObj[key] = obj[key];
                     continue;
                 }
-
-                translatedObj[key] = translateJsonValues(obj[key], newPath);
+                translatedObj[key] = translateJsonValues(obj[key], newPath, sourceUrl);
             }
             return translatedObj;
         } else if (typeof obj === "string") {
@@ -78,7 +78,12 @@
                 return obj;
             }
 
-            // 以下是原本的翻譯邏輯
+            // ✅ 限定 langDict 對 audio/timed_text JSON 生效
+            if (/\/(audio_languages|timed_text)_languages\.json/.test(sourceUrl)) {
+                return langDict[obj] || obj;
+            }
+
+            // 一般翻譯流程
             if (exactTranslationDict[obj]) {
                 return exactTranslationDict[obj];
             }
@@ -141,20 +146,31 @@
                     localVersion.extra = remoteVersion.extra;
                 })
             );
+            promises.push(
+                loadJson(CONFIG.langDictUrl).then(data => {
+                    langDict = data;
+                    GM.setValue('translation_lang', JSON.stringify(data));
+                })
+            );
             await Promise.all(promises);
             await GM.setValue('translation_version', JSON.stringify(localVersion));
         }
 
         const cachedExact = await GM.getValue('translation_exact');
         if (cachedExact) exactTranslationDict = JSON.parse(cachedExact);
+
         const cachedRegex = await GM.getValue('translation_regex');
         if (cachedRegex) regexTranslationDict = JSON.parse(cachedRegex);
+
         const cachedExtra = await GM.getValue('translation_extra');
         if (cachedExtra) {
             const data = JSON.parse(cachedExtra);
             extraExactDict = data.exact || {};
             extraRegexDict = data.regex || [];
         }
+
+        const cachedLang = await GM.getValue('translation_lang');
+        if (cachedLang) langDict = JSON.parse(cachedLang);
     }
 
     function waitForHeaderAndInsert() {
@@ -188,18 +204,15 @@
         `;
 
         refreshButton.addEventListener('click', async () => {
-            if (typeof updateTranslationDictionaries === 'function') {
-                await updateTranslationDictionaries("update");
-                const localVersion = JSON.parse(await GM.getValue('translation_version', '{}'));
-                alert(`翻譯字典已更新：${localVersion.exact} / ${localVersion.regex} / ${localVersion.extra}`);
-            }
+            await updateTranslationDictionaries("update");
+            const localVersion = JSON.parse(await GM.getValue('translation_version', '{}'));
+            alert(`翻譯字典已更新：\nEXACT v.${localVersion.exact}\nREGEX v.${localVersion.regex}\nEXTRA v.${localVersion.extra}`);
         });
         // 插入在搜尋按鈕前
         headerActions.insertBefore(refreshButton, searchButton);
     }
 
-    // const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json)/;
-    const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json|index.*\.js)/;
+    const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json|index.*\.js|\/(audio|timed_text)_languages\.json)/;
     const TARGET_METHOD = 'GET';
 
     GM_log('Crunchyroll Interceptor script loading...');
@@ -218,7 +231,7 @@
         };
 
         unsafeWindow.XMLHttpRequest.prototype.send = function (body) {
-            if (this._method === TARGET_METHOD && (TARGET_URL_REGEX.test(this._url) || this._url.includes('/v1/en-US/stories'))) {
+            if (this._method === TARGET_METHOD && TARGET_URL_REGEX.test(this._url)) {
                 const xhr = this;
                 const originalOnReadyStateChange = xhr.onreadystatechange;
 
@@ -227,24 +240,20 @@
                         const contentType = xhr.getResponseHeader('Content-Type') || '';
                         try {
                             let responseText = xhr.responseText;
-
                             let newText;
 
                             if (contentType.includes('application/json')) {
                                 const data = JSON.parse(responseText);
-                                const translatedData = translateJsonValues(data);
+                                const translatedData = translateJsonValues(data, "", xhr._url);
                                 newText = JSON.stringify(translatedData);
-                                GM_log('[XHR Modified] Pure JSON translated.');
                             } else {
-                                // 搜尋 JSON.parse 的內嵌字串
                                 const match = responseText.match(/JSON\.parse\(\s*'({\\".+?})'\s*\)/);
                                 if (match && match[1]) {
                                     const rawJsonStr = match[1].replace(/\\"/g, '"');
                                     const json = JSON.parse(rawJsonStr);
-                                    const translated = translateJsonValues(json);
+                                    const translated = translateJsonValues(json, "", xhr._url);
                                     const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
                                     newText = responseText.replace(match[1], reStr);
-                                    GM_log('[XHR Modified] Embedded JSON.parse translated.');
                                 }
                             }
 
@@ -269,7 +278,6 @@
             const method = (options && options.method ? options.method.toUpperCase() : (resource instanceof Request ? resource.method.toUpperCase() : 'GET'));
 
             if (method === TARGET_METHOD && TARGET_URL_REGEX.test(url)) {
-                GM_log(`[Fetch Intercepted] ${method} ${url}`);
                 return originalFetch.apply(this, arguments).then(response => {
                     const contentType = response.headers.get('Content-Type') || '';
                     return response.clone().text().then(text => {
@@ -278,18 +286,16 @@
 
                             if (contentType.includes('application/json')) {
                                 const data = JSON.parse(text);
-                                const translated = translateJsonValues(data);
+                                const translated = translateJsonValues(data, "", url);
                                 newText = JSON.stringify(translated);
-                                GM_log('[Fetch Modified] Pure JSON translated.');
                             } else {
                                 const match = text.match(/JSON\.parse\(\s*'({\\".+?})'\s*\)/);
                                 if (match && match[1]) {
                                     const rawJsonStr = match[1].replace(/\\"/g, '"');
                                     const json = JSON.parse(rawJsonStr);
-                                    const translated = translateJsonValues(json);
+                                    const translated = translateJsonValues(json, "", url);
                                     const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
                                     newText = text.replace(match[1], reStr);
-                                    GM_log('[Fetch Modified] Embedded JSON.parse translated.');
                                 }
                             }
 
