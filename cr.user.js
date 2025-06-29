@@ -212,7 +212,7 @@
         headerActions.insertBefore(refreshButton, searchButton);
     }
 
-    const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json|index.*\.js|\/(audio|timed_text)_languages\.json)/;
+    const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json|index.*\.js|\/static\/|\/(audio|timed_text)_languages\.json)|\/v\d\//;
     const TARGET_METHOD = 'GET';
 
     GM_log('Crunchyroll Interceptor script loading...');
@@ -247,6 +247,26 @@
                                 const translatedData = translateJsonValues(data, "", xhr._url);
                                 newText = JSON.stringify(translatedData);
                             } else {
+                                const regex = /JSON\.parse\(\s*'({\\".+?})'\s*\)/g;
+                                let newText = responseText;
+
+                                const matches = [...responseText.matchAll(regex)];
+
+                                for (const match of matches) {
+                                    const rawJsonStr = match[1].replace(/\\"/g, '"');
+                                    try {
+                                        const json = JSON.parse(rawJsonStr);
+                                        const translated = translateJsonValues(json, "", xhr._url);
+                                        const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
+                                        // 替換整段 JSON.parse('...') 而不只是內容
+                                        const originalFull = match[0];
+                                        const replacedFull = `JSON.parse('${reStr}')`;
+                                        newText = newText.replace(originalFull, replacedFull);
+                                    } catch (e) {
+                                        console.warn("JSON parse error: ", e);
+                                    }
+                                }
+                                /*
                                 const match = responseText.match(/JSON\.parse\(\s*'({\\".+?})'\s*\)/);
                                 if (match && match[1]) {
                                     const rawJsonStr = match[1].replace(/\\"/g, '"');
@@ -255,6 +275,7 @@
                                     const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
                                     newText = responseText.replace(match[1], reStr);
                                 }
+                                */
                             }
 
                             if (newText) {
@@ -276,7 +297,6 @@
         unsafeWindow.fetch = function (resource, options) {
             const url = resource instanceof Request ? resource.url : resource;
             const method = (options && options.method ? options.method.toUpperCase() : (resource instanceof Request ? resource.method.toUpperCase() : 'GET'));
-
             if (method === TARGET_METHOD && TARGET_URL_REGEX.test(url)) {
                 return originalFetch.apply(this, arguments).then(response => {
                     const contentType = response.headers.get('Content-Type') || '';
@@ -289,6 +309,24 @@
                                 const translated = translateJsonValues(data, "", url);
                                 newText = JSON.stringify(translated);
                             } else {
+                                const regex = /JSON\.parse\(\s*'({\\".+?})'\s*\)/g;
+                                let newText = text;
+                                const matches = [...text.matchAll(regex)];
+                                for (const match of matches) {
+                                    const rawJsonStr = match[1].replace(/\\"/g, '"');
+                                    try {
+                                        const json = JSON.parse(rawJsonStr);
+                                        const translated = translateJsonValues(json, "", url);
+                                        const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
+                                        // 替換整段 JSON.parse('...') 而不只是內容
+                                        const originalFull = match[0];
+                                        const replacedFull = `JSON.parse('${reStr}')`;
+                                        newText = newText.replace(originalFull, replacedFull);
+                                    } catch (e) {
+                                        console.warn("JSON parse error: ", e);
+                                    }
+                                }
+                                /*
                                 const match = text.match(/JSON\.parse\(\s*'({\\".+?})'\s*\)/);
                                 if (match && match[1]) {
                                     const rawJsonStr = match[1].replace(/\\"/g, '"');
@@ -297,6 +335,7 @@
                                     const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
                                     newText = text.replace(match[1], reStr);
                                 }
+                                */
                             }
 
                             if (newText) {
@@ -319,6 +358,7 @@
 
             return originalFetch.apply(this, arguments);
         };
+        
 
         GM_log('Crunchyroll Interceptor setup complete.');
     }).catch(err => GM_log('Failed to load dictionaries:', err));
