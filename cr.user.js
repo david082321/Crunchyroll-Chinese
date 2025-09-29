@@ -122,53 +122,42 @@
 
         if (loadType === "update") {
             const localVersion = JSON.parse(translation_version);
-            const promises = [];
             const remoteVersion = await loadJson(CONFIG.versionUrl);
-            promises.push(
+            await Promise.all([
                 loadJson(CONFIG.exactDictUrl).then(data => {
                     exactTranslationDict = data;
                     GM.setValue('translation_exact', JSON.stringify(data));
                     localVersion.exact = remoteVersion.exact;
-                })
-            );
-            promises.push(
+                }),
                 loadJson(CONFIG.regexDictUrl).then(data => {
                     regexTranslationDict = data;
                     GM.setValue('translation_regex', JSON.stringify(data));
                     localVersion.regex = remoteVersion.regex;
-                })
-            );
-            promises.push(
+                }),
                 loadJson(CONFIG.extraDictUrl).then(data => {
                     extraExactDict = data.exact || {};
                     extraRegexDict = data.regex || [];
                     GM.setValue('translation_extra', JSON.stringify(data));
                     localVersion.extra = remoteVersion.extra;
-                })
-            );
-            promises.push(
+                }),
                 loadJson(CONFIG.langDictUrl).then(data => {
                     langDict = data;
                     GM.setValue('translation_lang', JSON.stringify(data));
                 })
-            );
-            await Promise.all(promises);
+            ]);
             await GM.setValue('translation_version', JSON.stringify(localVersion));
         }
 
         const cachedExact = await GM.getValue('translation_exact');
         if (cachedExact) exactTranslationDict = JSON.parse(cachedExact);
-
         const cachedRegex = await GM.getValue('translation_regex');
         if (cachedRegex) regexTranslationDict = JSON.parse(cachedRegex);
-
         const cachedExtra = await GM.getValue('translation_extra');
         if (cachedExtra) {
             const data = JSON.parse(cachedExtra);
             extraExactDict = data.exact || {};
             extraRegexDict = data.regex || [];
         }
-
         const cachedLang = await GM.getValue('translation_lang');
         if (cachedLang) langDict = JSON.parse(cachedLang);
     }
@@ -202,17 +191,15 @@
             </div>
             </div>
         `;
-
         refreshButton.addEventListener('click', async () => {
             await updateTranslationDictionaries("update");
             const localVersion = JSON.parse(await GM.getValue('translation_version', '{}'));
             alert(`翻譯字典已更新：\nEXACT v.${localVersion.exact}\nREGEX v.${localVersion.regex}\nEXTRA v.${localVersion.extra}`);
         });
-        // 插入在搜尋按鈕前
         headerActions.insertBefore(refreshButton, searchButton);
     }
 
-    const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json|index.*\.js|\/static\/|\/(audio|timed_text)_languages\.json)|\/v\d\//;
+    const TARGET_URL_REGEX = /([?&]locale=en-US|en_US\.json|index.*\.js|\/static\/.*\.js|\/(audio|timed_text)_languages\.json)|\/v\d\//;
     const TARGET_METHOD = 'GET';
 
     GM_log('Crunchyroll Interceptor script loading...');
@@ -249,40 +236,22 @@
                             } else {
                                 const regex = /JSON\.parse\(\s*'({\\".+?})'\s*\)/g;
                                 let newText = responseText;
-
                                 const matches = [...responseText.matchAll(regex)];
-
                                 for (const match of matches) {
-                                    const rawJsonStr = match[1].replace(/\\"/g, '"');
-                                    try {
-                                        const json = JSON.parse(rawJsonStr);
-                                        const translated = translateJsonValues(json, "", xhr._url);
-                                        const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
-                                        // 替換整段 JSON.parse('...') 而不只是內容
-                                        const originalFull = match[0];
-                                        const replacedFull = `JSON.parse('${reStr}')`;
-                                        newText = newText.replace(originalFull, replacedFull);
-                                    } catch (e) {
-                                        console.warn("JSON parse error: ", e);
-                                    }
-                                }
-                                /*
-                                const match = responseText.match(/JSON\.parse\(\s*'({\\".+?})'\s*\)/);
-                                if (match && match[1]) {
                                     const rawJsonStr = match[1].replace(/\\"/g, '"');
                                     const json = JSON.parse(rawJsonStr);
                                     const translated = translateJsonValues(json, "", xhr._url);
                                     const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
-                                    newText = responseText.replace(match[1], reStr);
+                                    const originalFull = match[0];
+                                    const replacedFull = `JSON.parse('${reStr}')`;
+                                    newText = newText.replace(originalFull, replacedFull);
                                 }
-                                */
                             }
 
                             if (newText) {
                                 Object.defineProperty(xhr, 'responseText', { get: () => newText });
                                 Object.defineProperty(xhr, 'response', { get: () => newText });
                             }
-
                         } catch (e) {
                             GM_log('XHR parse error:', e);
                         }
@@ -303,7 +272,6 @@
                     return response.clone().text().then(text => {
                         try {
                             let newText;
-
                             if (contentType.includes('application/json')) {
                                 const data = JSON.parse(text);
                                 const translated = translateJsonValues(data, "", url);
@@ -314,28 +282,13 @@
                                 const matches = [...text.matchAll(regex)];
                                 for (const match of matches) {
                                     const rawJsonStr = match[1].replace(/\\"/g, '"');
-                                    try {
-                                        const json = JSON.parse(rawJsonStr);
-                                        const translated = translateJsonValues(json, "", url);
-                                        const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
-                                        // 替換整段 JSON.parse('...') 而不只是內容
-                                        const originalFull = match[0];
-                                        const replacedFull = `JSON.parse('${reStr}')`;
-                                        newText = newText.replace(originalFull, replacedFull);
-                                    } catch (e) {
-                                        console.warn("JSON parse error: ", e);
-                                    }
-                                }
-                                /*
-                                const match = text.match(/JSON\.parse\(\s*'({\\".+?})'\s*\)/);
-                                if (match && match[1]) {
-                                    const rawJsonStr = match[1].replace(/\\"/g, '"');
                                     const json = JSON.parse(rawJsonStr);
                                     const translated = translateJsonValues(json, "", url);
                                     const reStr = JSON.stringify(translated).replace(/"/g, '\\"');
-                                    newText = text.replace(match[1], reStr);
+                                    const originalFull = match[0];
+                                    const replacedFull = `JSON.parse('${reStr}')`;
+                                    newText = newText.replace(originalFull, replacedFull);
                                 }
-                                */
                             }
 
                             if (newText) {
@@ -358,8 +311,48 @@
 
             return originalFetch.apply(this, arguments);
         };
-        
 
         GM_log('Crunchyroll Interceptor setup complete.');
     }).catch(err => GM_log('Failed to load dictionaries:', err));
+
+    // 🔧 script.src 攔截與動態監聽
+    const originalSetAttribute = HTMLScriptElement.prototype.setAttribute;
+    HTMLScriptElement.prototype.setAttribute = function (name, value) {
+        if (name === 'src' && TARGET_URL_REGEX.test(value)) {
+            console.log('🔍 Script src intercepted via setAttribute:', value);
+        }
+        return originalSetAttribute.apply(this, arguments);
+    };
+
+    Object.defineProperty(HTMLScriptElement.prototype, 'src', {
+        set: function (value) {
+            if (TARGET_URL_REGEX.test(value)) {
+                console.log('🔍 Script src intercepted via direct .src =', value);
+            }
+            this.setAttribute('src', value);
+        },
+        get: function () {
+            return this.getAttribute('src');
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('script[src]').forEach(script => {
+            const src = script.getAttribute('src');
+            if (TARGET_URL_REGEX.test(src)) {
+                console.log('🔍 Already loaded script detected:', src);
+            }
+        });
+    });
+
+    const observer = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+            mutation.addedNodes.forEach(node => {
+                if (node.tagName === 'SCRIPT' && node.src && TARGET_URL_REGEX.test(node.src)) {
+                    console.log('🔍 Script added via DOM:', node.src);
+                }
+            });
+        }
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
 })();

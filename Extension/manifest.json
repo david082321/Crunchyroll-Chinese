@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Crunchyroll 中文化",
+  "version": "3.1",
+  "description": "實現 Crunchyroll UI 中文化，並支援遠端字典更新。",
+  "permissions": [
+    "scripting",
+    "storage",
+    "alarms" 
+  ],
+  "host_permissions": [
+    "https://www.crunchyroll.com/*",
+    "https://raw.githubusercontent.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.crunchyroll.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["modifier.js"],
+      "matches": ["https://www.crunchyroll.com/*"]
+    }
+  ]
+}
