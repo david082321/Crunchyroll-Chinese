@@ -10,6 +10,7 @@
         const uiTextDict = dictionaries.dict_exact || {};
         const regexRules = dictionaries.dict_regex || [];
         const langTextNameDict = {
+            "Japanese": "日文",
             "العربية": "阿拉伯文",
             "Català": "加泰羅尼亞文",
             "Deutsch": "德文",
@@ -34,6 +35,7 @@
             "中文 (繁体)": "繁體中文"
         };
         const langVoiceNameDict = {
+            "Japanese": "日語",
             "العربية": "阿拉伯語",
             "Català": "加泰羅尼亞語",
             "Deutsch": "德語",
