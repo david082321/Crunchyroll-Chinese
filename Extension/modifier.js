@@ -184,81 +184,83 @@
         // ====================================================================
         
         function translateNode(node) {
-            if (node.nodeType !== Node.ELEMENT_NODE || node.closest('[data-cr-translated]')) {
-                return;
-            }
-            // ... (IGNORE_TAGS 定义保持不变) ...
-            const IGNORE_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT', 'CODE', 'PRE']);
-            if (IGNORE_TAGS.has(node.tagName)) {
-                node.setAttribute('data-cr-translated', 'ignored');
+            // 忽略非元素節點
+            if (node.nodeType !== Node.ELEMENT_NODE) {
                 return;
             }
 
-            // --- 策略 A: 智能模板塊翻譯 ---
-            // 這個策略現在可以處理包含子元素（如<a>）的複雜句子
-            
-            // 1. 構建模板和子元素地圖
-            let templateKey = '';
-            const childrenMap = [];
-            for (const childNode of node.childNodes) {
-                if (childNode.nodeType === Node.TEXT_NODE) {
-                    templateKey += childNode.nodeValue;
-                } else if (childNode.nodeType === Node.ELEMENT_NODE) {
-                    // 為子元素創建一個佔位符，並將元素本身存起來
-                    const placeholder = `{{CHILD_${childrenMap.length}}}`;
-                    templateKey += placeholder;
-                    childrenMap.push(childNode);
+            // 忽略不需要翻譯的標籤
+            if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT', 'CODE'].includes(node.tagName)) {
+                return;
+            }
+
+            // 1. 遍歷所有子節點，採用遞歸，由深到淺處理
+            // 這樣可以先翻譯最裡層的內容，比如 <a> 標籤裡的文字
+            for (const child of Array.from(node.childNodes)) {
+                 if (child.nodeType === Node.ELEMENT_NODE) {
+                    translateNode(child); // 如果子節點是元素，遞歸進去
                 }
             }
-            
-            // 2. 規範化模板鍵並在字典中查找
-            const normalizedKey = templateKey.trim().replace(/\s+/g, ' ');
-            const translatedTemplate = normalizedUiTextDict[normalizedKey];
 
-            if (translatedTemplate) {
-                console.log(`[CR-Translate Template] Translating: "${normalizedKey}" -> "${translatedTemplate}"`);
+            // 2. 處理完所有子節點後，再處理當前節點自身
+            // 檢查節點或其父節點是否已被更上層的邏輯處理過
+            if (node.closest('[data-cr-translated]')) {
+                return;
+            }
 
-                // 3. 如果找到翻譯，就用它來重建節點內容
-                // 這一步會清除所有舊的子節點，包括多餘的空格文本節點
-                while (node.firstChild) {
-                    node.removeChild(node.lastChild);
-                }
-                
-                // 4. 解析翻譯模板並插入新內容
-                // 使用正則表達式來分割字符串，同時保留佔位符
-                const parts = translatedTemplate.split(/(\{\{CHILD_\d+\}\})/g);
-                
-                for (const part of parts) {
-                    if (!part) continue;
+            // 策略 A: 嘗試將整個節點的 textContent 作為一個整體進行翻譯
+            // 這能處理 "Visit our <a>Help Center</a> to learn more." 這樣的複雜情況
+            const fullText = node.textContent.trim();
+            if (uiTextDict[fullText]) {
+                const translatedFullText = uiTextDict[fullText];
+                console.log(`[CR-Translate DOM Block] Translating: "${fullText}" -> "${translatedFullText}"`);
 
-                    const match = part.match(/\{\{CHILD_(\d+)\}\}/);
-                    if (match) {
-                        // 如果是佔位符，從地圖中取出對應的子元素並插入
-                        const childIndex = parseInt(match[1], 10);
-                        if (childrenMap[childIndex]) {
-                            // **重要**：在插入前，先對子元素本身進行遞歸翻譯
-                            translateNode(childrenMap[childIndex]);
-                            node.appendChild(childrenMap[childIndex]);
+                // 創建一個映射來保存子元素
+                const childMap = new Map();
+                // 遍歷直接子元素，用佔位符替換它們
+                Array.from(node.children).forEach((child, index) => {
+                    const placeholder = `__CR_CHILD_${index}__`;
+                    childMap.set(placeholder, child.cloneNode(true)); // 保存子元素的克隆
+                    child.replaceWith(document.createTextNode(placeholder));
+                });
+
+                // 此時，node.textContent 只剩下純文本部分，我們將其替換為完整的翻譯文本
+                node.textContent = translatedFullText;
+
+                // 最後，將佔位符還原為之前保存的子元素
+                for (const [placeholder, childElement] of childMap.entries()) {
+                    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+                    let textNode;
+                    while (textNode = walker.nextNode()) {
+                        if (textNode.nodeValue.includes(placeholder)) {
+                            const parts = textNode.nodeValue.split(placeholder);
+                            const parent = textNode.parentNode;
+                            parent.insertBefore(document.createTextNode(parts[0]), textNode);
+                            parent.insertBefore(childElement, textNode);
+                            parent.insertBefore(document.createTextNode(parts[1]), textNode);
+                            parent.removeChild(textNode);
+                            break; // 處理完一個佔位符就跳出
                         }
-                    } else {
-                        // 如果是普通文本，創建文本節點並插入
-                        node.appendChild(document.createTextNode(part));
                     }
                 }
                 
-                node.setAttribute('data-cr-translated', 'template');
-                return; // 模板翻譯成功，任務完成
+                node.setAttribute('data-cr-translated', 'block');
+                return; // 成功作爲塊翻譯後，就不用再單獨處理其文本節點了
             }
-
-            // --- 策略 B: 如果模板塊翻譯失敗，則遞歸處理子節點 ---
+            
+            // 策略 B: 如果塊翻譯不成功，則只翻譯該節點直接擁有的文本節點
+            // 這能處理簡單的 <button>OK</button> 和修復 V2 的回退問題
             for (const child of Array.from(node.childNodes)) {
-                 if (child.nodeType === Node.ELEMENT_NODE) {
-                    translateNode(child);
+                if (child.nodeType === Node.TEXT_NODE) {
+                    const originalText = child.nodeValue.trim();
+                    if (uiTextDict[originalText]) {
+                        const translatedText = uiTextDict[originalText];
+                        console.log(`[CR-Translate DOM Text] Translating: "${originalText}" -> "${translatedText}"`);
+                        // 使用 replace 而非直接賦值，以保留原始的空白字符
+                        child.nodeValue = child.nodeValue.replace(originalText, translatedText);
+                        node.setAttribute('data-cr-translated', 'text');
+                    }
                 }
-                // 注意：這裡不再單獨處理TEXT_NODE，因為如果它可被翻譯，
-                // 通常意味著它是一個更大句子的一部分，應該由模板塊翻譯處理。
-                // 只有最簡單的、父元素不構成句子的文本節點才需要單獨翻譯，
-                // 這種情況很少見，且可以通過完善字典中的模板鍵來解決。
             }
         }
 
