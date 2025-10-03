@@ -6,7 +6,7 @@ const CONFIG = {
     regexDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/regex.json',
     extraDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/extra.json',
     langDictUrl: 'https://raw.githubusercontent.com/david082321/Crunchyroll-Chinese/refs/heads/main/lang.json',
-    checkIntervalMinutes: 1440 // 每天檢查一次 (24 * 60)
+    checkIntervalMinutes: 60 // 每天檢查一次 (24 * 60)
 };
 
 async function fetchJson(url) {
