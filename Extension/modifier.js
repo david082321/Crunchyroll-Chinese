@@ -183,87 +183,114 @@
         // B. 新增的 DOM 節點翻譯器
         // ====================================================================
         
-        /**
-         * 遍歷指定 DOM 元素下的所有文本節點並進行翻譯。
-         * @param {Node} rootNode - 開始遍歷的根節點。
-         */
-        function translateDomElements(rootNode) {
-            // TreeWalker 是遍歷 DOM 節點最高效的方式之一
-            // 我們告訴它我們只關心文本節點 (NodeFilter.SHOW_TEXT)
-            const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT, {
-                acceptNode: function(node) {
-                    // 忽略 <script> 和 <style> 標籤內的文本
-                    if (node.parentElement.tagName === 'SCRIPT' || node.parentElement.tagName === 'STYLE') {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    // 忽略純粹由空白組成的節點
-                    if (!/\S/.test(node.nodeValue)) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            });
-
-            let node;
-            const nodesToTranslate = [];
-            while (node = walker.nextNode()) {
-                nodesToTranslate.push(node);
+        function translateNode(node) {
+            // 忽略非元素節點
+            if (node.nodeType !== Node.ELEMENT_NODE) {
+                return;
             }
 
-            for (const node of nodesToTranslate) {
-                const originalText = node.nodeValue.trim();
+            // 忽略不需要翻譯的標籤
+            if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT', 'CODE'].includes(node.tagName)) {
+                return;
+            }
 
-                // 檢查字典中是否存在完全匹配的條目
-                if (uiTextDict[originalText]) {
-                    // 為了防止重複翻譯和無限循環，我們先檢查一個標記
-                    if (node.parentElement && !node.parentElement.hasAttribute('data-translated')) {
+            // 1. 遍歷所有子節點，採用遞歸，由深到淺處理
+            // 這樣可以先翻譯最裡層的內容，比如 <a> 標籤裡的文字
+            for (const child of Array.from(node.childNodes)) {
+                 if (child.nodeType === Node.ELEMENT_NODE) {
+                    translateNode(child); // 如果子節點是元素，遞歸進去
+                }
+            }
+
+            // 2. 處理完所有子節點後，再處理當前節點自身
+            // 檢查節點或其父節點是否已被更上層的邏輯處理過
+            if (node.closest('[data-cr-translated]')) {
+                return;
+            }
+
+            // 策略 A: 嘗試將整個節點的 textContent 作為一個整體進行翻譯
+            // 這能處理 "Visit our <a>Help Center</a> to learn more." 這樣的複雜情況
+            const fullText = node.textContent.trim();
+            if (uiTextDict[fullText]) {
+                const translatedFullText = uiTextDict[fullText];
+                console.log(`[CR-Translate DOM Block] Translating: "${fullText}" -> "${translatedFullText}"`);
+
+                // 創建一個映射來保存子元素
+                const childMap = new Map();
+                // 遍歷直接子元素，用佔位符替換它們
+                Array.from(node.children).forEach((child, index) => {
+                    const placeholder = `__CR_CHILD_${index}__`;
+                    childMap.set(placeholder, child.cloneNode(true)); // 保存子元素的克隆
+                    child.replaceWith(document.createTextNode(placeholder));
+                });
+
+                // 此時，node.textContent 只剩下純文本部分，我們將其替換為完整的翻譯文本
+                node.textContent = translatedFullText;
+
+                // 最後，將佔位符還原為之前保存的子元素
+                for (const [placeholder, childElement] of childMap.entries()) {
+                    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+                    let textNode;
+                    while (textNode = walker.nextNode()) {
+                        if (textNode.nodeValue.includes(placeholder)) {
+                            const parts = textNode.nodeValue.split(placeholder);
+                            const parent = textNode.parentNode;
+                            parent.insertBefore(document.createTextNode(parts[0]), textNode);
+                            parent.insertBefore(childElement, textNode);
+                            parent.insertBefore(document.createTextNode(parts[1]), textNode);
+                            parent.removeChild(textNode);
+                            break; // 處理完一個佔位符就跳出
+                        }
+                    }
+                }
+                
+                node.setAttribute('data-cr-translated', 'block');
+                return; // 成功作爲塊翻譯後，就不用再單獨處理其文本節點了
+            }
+            
+            // 策略 B: 如果塊翻譯不成功，則只翻譯該節點直接擁有的文本節點
+            // 這能處理簡單的 <button>OK</button> 和修復 V2 的回退問題
+            for (const child of Array.from(node.childNodes)) {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    const originalText = child.nodeValue.trim();
+                    if (uiTextDict[originalText]) {
                         const translatedText = uiTextDict[originalText];
-                        console.log(`[CR-Translate DOM] Translating "${originalText}" to "${translatedText}"`);
-                        node.nodeValue = node.nodeValue.replace(originalText, translatedText);
-                        
-                        // 標記父元素已翻譯，避免其子節點被重複處理
-                        node.parentElement.setAttribute('data-translated', 'true');
+                        console.log(`[CR-Translate DOM Text] Translating: "${originalText}" -> "${translatedText}"`);
+                        // 使用 replace 而非直接賦值，以保留原始的空白字符
+                        child.nodeValue = child.nodeValue.replace(originalText, translatedText);
+                        node.setAttribute('data-cr-translated', 'text');
                     }
                 }
             }
         }
 
-        /**
-         * 處理 DOM 變化的回調函數
-         * @param {MutationRecord[]} mutationsList - 發生變化的記錄列表
-         */
+        // --- MutationObserver 邏輯 ---
         const mutationCallback = (mutationsList) => {
             for (const mutation of mutationsList) {
-                // 我們只關心新增的節點
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                     mutation.addedNodes.forEach(node => {
-                        // 確保節點是元素節點 (例如 div, span)，而不是純文本節點
-                        // 因為我們的遍歷是從元素開始的
-                        if (node.nodeType === Node.ELEMENT_NODE) {
-                            translateDomElements(node);
-                        }
+                        translateNode(node);
                     });
                 }
             }
         };
 
-        // 創建一個 MutationObserver 實例來監聽 DOM 變化
         const observer = new MutationObserver(mutationCallback);
+        const observerConfig = { childList: true, subtree: true };
 
-        // 觀察器配置：監聽子節點的添加/刪除，並遞歸觀察所有後代節點
-        const observerConfig = {
-            childList: true,
-            subtree: true
+        // --- 啟動 ---
+        const startTranslation = () => {
+            console.log('CR-Translate: Performing initial full-page DOM translation...');
+            translateNode(document.body);
+            observer.observe(document.body, observerConfig);
+            console.log('CR-Translate: MutationObserver is now watching for DOM changes.');
         };
 
-        // 1. 執行首次全頁翻譯
-        console.log('CR-Translate: Performing initial full-page DOM translation...');
-        translateDomElements(document.body);
-
-        // 2. 開始監聽整個 body 的變化，以便翻譯動態載入的內容
-        observer.observe(document.body, observerConfig);
-        console.log('CR-Translate: MutationObserver is now watching for DOM changes.');
-
+        if (document.body) {
+            startTranslation();
+        } else {
+            window.addEventListener('DOMContentLoaded', startTranslation, { once: true });
+        }
     }
 
     // --- 啟動邏輯 ---
