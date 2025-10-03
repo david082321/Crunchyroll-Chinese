@@ -5,7 +5,7 @@
     
     // --- 核心翻譯邏輯，等待字典被傳入後才會執行 ---
     function initializeTranslator(dictionaries) {
-        console.log('CR-Translate: [INIT] Dictionaries received. Initializing translator...');
+        console.log('CR-Translate: [INIT] Dictionaries received. Initializing translators...');
         
         const uiTextDict = dictionaries.dict_exact || {};
         const regexRules = dictionaries.dict_regex || [];
@@ -178,6 +178,92 @@
             return data;
         };
         console.log('CR-Translate: Universal JSON.parse interceptor is now armed and ready.');
+
+        // ====================================================================
+        // B. 新增的 DOM 節點翻譯器
+        // ====================================================================
+        
+        /**
+         * 遍歷指定 DOM 元素下的所有文本節點並進行翻譯。
+         * @param {Node} rootNode - 開始遍歷的根節點。
+         */
+        function translateDomElements(rootNode) {
+            // TreeWalker 是遍歷 DOM 節點最高效的方式之一
+            // 我們告訴它我們只關心文本節點 (NodeFilter.SHOW_TEXT)
+            const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT, {
+                acceptNode: function(node) {
+                    // 忽略 <script> 和 <style> 標籤內的文本
+                    if (node.parentElement.tagName === 'SCRIPT' || node.parentElement.tagName === 'STYLE') {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    // 忽略純粹由空白組成的節點
+                    if (!/\S/.test(node.nodeValue)) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            });
+
+            let node;
+            const nodesToTranslate = [];
+            while (node = walker.nextNode()) {
+                nodesToTranslate.push(node);
+            }
+
+            for (const node of nodesToTranslate) {
+                const originalText = node.nodeValue.trim();
+
+                // 檢查字典中是否存在完全匹配的條目
+                if (uiTextDict[originalText]) {
+                    // 為了防止重複翻譯和無限循環，我們先檢查一個標記
+                    if (node.parentElement && !node.parentElement.hasAttribute('data-translated')) {
+                        const translatedText = uiTextDict[originalText];
+                        console.log(`[CR-Translate DOM] Translating "${originalText}" to "${translatedText}"`);
+                        node.nodeValue = node.nodeValue.replace(originalText, translatedText);
+                        
+                        // 標記父元素已翻譯，避免其子節點被重複處理
+                        node.parentElement.setAttribute('data-translated', 'true');
+                    }
+                }
+            }
+        }
+
+        /**
+         * 處理 DOM 變化的回調函數
+         * @param {MutationRecord[]} mutationsList - 發生變化的記錄列表
+         */
+        const mutationCallback = (mutationsList) => {
+            for (const mutation of mutationsList) {
+                // 我們只關心新增的節點
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    mutation.addedNodes.forEach(node => {
+                        // 確保節點是元素節點 (例如 div, span)，而不是純文本節點
+                        // 因為我們的遍歷是從元素開始的
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            translateDomElements(node);
+                        }
+                    });
+                }
+            }
+        };
+
+        // 創建一個 MutationObserver 實例來監聽 DOM 變化
+        const observer = new MutationObserver(mutationCallback);
+
+        // 觀察器配置：監聽子節點的添加/刪除，並遞歸觀察所有後代節點
+        const observerConfig = {
+            childList: true,
+            subtree: true
+        };
+
+        // 1. 執行首次全頁翻譯
+        console.log('CR-Translate: Performing initial full-page DOM translation...');
+        translateDomElements(document.body);
+
+        // 2. 開始監聽整個 body 的變化，以便翻譯動態載入的內容
+        observer.observe(document.body, observerConfig);
+        console.log('CR-Translate: MutationObserver is now watching for DOM changes.');
+
     }
 
     // --- 啟動邏輯 ---

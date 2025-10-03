@@ -9,7 +9,8 @@
     "alarms" 
   ],
   "host_permissions": [
-    "https://www.crunchyroll.com/*",
+    "https://crunchyroll.com/*",
+    "https://*.crunchyroll.com/*",
     "https://raw.githubusercontent.com/*"
   ],
   "background": {
@@ -17,7 +18,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.crunchyroll.com/*"],
+      "matches": ["https://*.crunchyroll.com/*"],
       "js": ["content.js"],
       "run_at": "document_start"
     }

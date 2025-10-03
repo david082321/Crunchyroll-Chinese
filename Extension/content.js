@@ -1,4 +1,4 @@
-// content.js (修正時序問題)
+// content.js
 
 console.log('[CR-Translate CS] Content script loaded. Injecting modifier first...');
 
